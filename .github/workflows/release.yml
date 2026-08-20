@@ -57,7 +57,9 @@ jobs:
             VER=$(grep -E "^version:" pubspec.yaml | awk '{print $2}' | cut -d'+' -f1)
           fi
           echo "version=$VER" >> "$GITHUB_OUTPUT"
-          echo "Resolved version=$VER"
+          # 无论标签或手动触发，Release tag 统一为 v<version>
+          echo "release-tag=v${VER}" >> "$GITHUB_OUTPUT"
+          echo "Resolved version=$VER release-tag=v${VER}"
 
       - name: Stage APK
         id: assets
@@ -67,22 +69,16 @@ jobs:
           mkdir -p dist
           APK="build/app/outputs/flutter-apk/app-release.apk"
           VER="${{ steps.version.outputs.version }}"
-          # 由 tag 触发时 tag 名形如 v1.3.0，用它做文件名版本；否则用解析出的版本号
-          REF="${{ github.ref_type }}"
-          if [ "$REF" = "tag" ]; then
-            TAG="${GITHUB_REF_NAME#v}"
-          else
-            TAG="$VER"
-          fi
-          OUT="dist/Sub2API管理面板_v${TAG}.apk"
+          # ASCII 安全的资产名（避免中文/特殊字符在 GitHub 上被转义）
+          OUT="dist/sub2admin-v${VER}.apk"
           cp "$APK" "$OUT"
           echo "apk=$OUT" >> "$GITHUB_OUTPUT"
-          echo "asset-name=$(basename "$OUT")" >> "$GITHUB_OUTPUT"
+          echo "apk-name=$(basename "$OUT")" >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "${{ github.ref_name }}"
+          tag_name: "${{ steps.version.outputs.release-tag }}"
           name: "Sub2API 管理面板 v${{ steps.version.outputs.version }}"
           body: |
             ## Sub2API 管理面板 v${{ steps.version.outputs.version }}
