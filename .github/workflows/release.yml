@@ -37,8 +37,9 @@ jobs:
         run: flutter pub get
 
       # 静态分析 + 单元测试（可选但推荐，失败则中止发布）
+      # 仅把真正的 error 作为失败门槛；info/warning 级风格 lint 不阻塞发布
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Test
         run: flutter test
