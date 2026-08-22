@@ -29,12 +29,30 @@
 
 ---
 
+
+## 📸 截图预览（纯净全面屏 · 无状态栏）
+
+> 截图由 Flutter Golden 测试直接渲染，均为 1200×2608 全面屏效果；展示数据为**演示假数据**，不涉及真实密钥/金额/IP。
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/01_dashboard.png" width="200"><br><b>实时总览</b></td>
+    <td align="center"><img src="screenshots/02_keys.png" width="200"><br><b>密钥中心</b></td>
+    <td align="center"><img src="screenshots/03_users.png" width="200"><br><b>用户管理</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/04_channels.png" width="200"><br><b>渠道管理</b></td>
+    <td align="center"><img src="screenshots/05_logs.png" width="200"><br><b>日志 / 模型</b></td>
+    <td align="center"><img src="screenshots/06_settings.png" width="200"><br><b>设置 · 动态取色主题</b></td>
+  </tr>
+</table>
+
 ## 📦 安装
 
 直接安装打包好的 APK：
 
 ```
-Sub2API管理面板_v1.3.0专业版.apk   （约 18 MB，arm64 架构，覆盖绝大多数现代安卓手机）
+Sub2API管理面板_v1.3.0玻璃高级版.apk   （约 18 MB，arm64 架构，覆盖绝大多数现代安卓手机）
 ```
 
 > 如需 x86_64 / 全 ABI 版本，请在项目目录执行：

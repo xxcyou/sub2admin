@@ -16,6 +16,22 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  bool _capturing = false;
+
+  Future<void> _captureBrand(AppState state) async {
+    setState(() => _capturing = true);
+    final c = await state.captureSiteBrandColor();
+    if (mounted) {
+      setState(() => _capturing = false);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+            content: Text(c != null
+                ? '已采集站点品牌色 #${c.toARGB32().toRadixString(16).substring(2).toUpperCase()}'
+                : '采集失败：站点未暴露主题色')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -89,6 +105,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, color: scheme.primary, size: 18),
+                    const SizedBox(width: 8),
+                    Text('动态取色 · Liquid Glass',
+                        style: TextStyle(color: scheme.onSurface, fontWeight: FontWeight.w800, fontSize: 15)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text('一键采集站点品牌色，或从下方取色，全局即时流动玻璃联动',
+                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _capturing ? null : () => _captureBrand(state),
+                    icon: _capturing
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.colorize_rounded),
+                    label: Text(_capturing ? '采集中…' : '🎨 采集站点品牌色'),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text('炫彩流动渐变',
+                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: kLiquidPalettes.map((p) {
+                    final active = state.seedOverride != null &&
+                        state.glowA.toARGB32() == p.glowA.toARGB32();
+                    return InkWell(
+                      onTap: () => state.applyLiquidPalette(p),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 64,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: active ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.4),
+                            width: active ? 2 : 1,
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [p.glowA, p.glowB],
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.bubble_chart_rounded, color: Colors.white, size: 16),
+                            const SizedBox(height: 4),
+                            Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.white, fontSize: 9)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                if (state.seedOverride != null) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => state.clearDynamicSeed(),
+                    icon: const Icon(Icons.restart_alt_rounded),
+                    label: const Text('恢复预设主题'),
+                  ),
+                ],
+                const Divider(height: 28),
                 Text(
                   '选择主题',
                   style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
@@ -201,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Column(
               children: [
-                _InfoRow(label: '应用版本', value: '1.2.0'),
+                _InfoRow(label: '应用版本', value: '1.3.0'),
                 const Divider(height: 20),
                 _InfoRow(label: 'API 模式', value: '管理员 Key (x-api-key)'),
                 const Divider(height: 20),

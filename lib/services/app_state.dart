@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/app_theme.dart';
@@ -121,6 +122,49 @@ class AppState extends ChangeNotifier {
     client = null;
     hasSession = false;
     notifyListeners();
+  }
+
+  /// Fetch the admin site's frontend CSS and heuristically extract its brand
+  /// color, then apply it as the dynamic theme seed.
+  Future<Color?> captureSiteBrandColor() async {
+    try {
+      final base = config?.baseUrl ?? '';
+      if (base.isEmpty) return null;
+      final root = await http.get(Uri.parse(base)).timeout(const Duration(seconds: 10));
+      final html = root.body;
+      final cssMatch = RegExp(r'assets/[A-Za-z0-9_.-]+\.css').firstMatch(html);
+      if (cssMatch == null) return null;
+      final cssUrl = '$base/${cssMatch.group(0)}';
+      final css = await http.get(Uri.parse(cssUrl)).timeout(const Duration(seconds: 10));
+      final colors = RegExp(r'#([0-9a-fA-F]{6})').allMatches(css.body).map((m) => m.group(1)!.toUpperCase()).toList();
+      if (colors.isEmpty) return null;
+
+      // Score each color: saturated/medium-bright colors are likely brand accents.
+      String? best;
+      double bestScore = -1;
+      for (final c in colors) {
+        final rgb = Color(int.parse('FF$c', radix: 16));
+        final hsl = HSLColor.fromColor(rgb);
+        // avoid pure gray/black/white, prefer mid-brightness saturated hues
+        if (hsl.saturation < 0.25) continue;
+        if (hsl.lightness < 0.12 || hsl.lightness > 0.9) continue;
+        final score = hsl.saturation * 0.6 + (0.5 - (hsl.lightness - 0.5).abs()) * 0.4 + colors.where((x) => x == c).length * 0.01;
+        if (score > bestScore) {
+          bestScore = score;
+          best = c;
+        }
+      }
+      if (best == null) return null;
+      await setDynamicSeed(Color(int.parse('FF$best', radix: 16)));
+      return _seedOverride;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Apply one of the curated liquid palettes (reset dynamic seed or set it).
+  Future<void> applyLiquidPalette(LiquidPalette p) async {
+    await setDynamicSeed(p.seed, glowA: p.glowA, glowB: p.glowB);
   }
 
   ApiClient get api {

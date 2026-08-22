@@ -242,15 +242,15 @@ class GlassNavBar extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: sel ? scheme.primary : Colors.transparent,
-                            boxShadow: sel
-                                ? [
-                                    BoxShadow(
-                                      color: scheme.primary.withValues(alpha: 0.5),
-                                      blurRadius: 14,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ]
-                                : null,
+                            boxShadow: [
+                              BoxShadow(
+                                color: sel
+                                    ? scheme.primary.withValues(alpha: 0.5)
+                                    : Colors.transparent,
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: Icon(
                             it.icon,

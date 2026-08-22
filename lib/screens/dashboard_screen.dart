@@ -8,6 +8,7 @@ import '../models/models.dart';
 import '../services/app_state.dart';
 import '../services/repository.dart';
 import '../widgets/widgets.dart';
+import '../theme/liquid.dart';
 import 'system_screen.dart';
 import 'api_key_screen.dart';
 import 'usage_screen.dart';
@@ -129,6 +130,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SectionHeader(title: '吞吐 · Token/秒'),
           const SizedBox(height: 12),
           _ThroughputChart(points: _throughput),
+          const SizedBox(height: 10),
+          const SectionHeader(title: '实时速率数字 · Token/秒'),
+          const SizedBox(height: 8),
+          _TpsTable(points: _throughput),
           const SizedBox(height: 20),
         ],
         if (_latency != null && _latency!.buckets.isNotEmpty) ...[
@@ -205,8 +210,15 @@ class _RealtimeHero extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(rt != null ? fmtCompact(rt.tpsCurrent) : '--',
-                  style: const TextStyle(color: Colors.white, fontSize: 46, fontWeight: FontWeight.w800, height: 1)),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(rt != null ? fmtCompact(rt.tpsCurrent) : '--',
+                      maxLines: 1,
+                      style: const TextStyle(color: Colors.white, fontSize: 46, fontWeight: FontWeight.w800, height: 1)),
+                ),
+              ),
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -217,12 +229,14 @@ class _RealtimeHero extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _subStat('峰值', rt?.tpsPeak, rt != null ? fmtCompact(rt.tpsPeak) : '--'),
-              _subStat('平均', rt?.tpsAvg, rt != null ? fmtCompact(rt.tpsAvg) : '--'),
-              _subStat('QPS', rt?.qpsCurrent, rt != null ? rt.qpsCurrent.toStringAsFixed(1) : '--'),
-              _subStat('窗口', rt?.window, rt?.window ?? '--'),
+              Expanded(child: _subStat('峰值', rt?.tpsPeak, rt != null ? fmtCompact(rt.tpsPeak) : '--')),
+              const SizedBox(width: 4),
+              Expanded(child: _subStat('平均', rt?.tpsAvg, rt != null ? fmtCompact(rt.tpsAvg) : '--')),
+              const SizedBox(width: 4),
+              Expanded(child: _subStat('QPS', rt?.qpsCurrent, rt != null ? rt.qpsCurrent.toStringAsFixed(1) : '--')),
+              const SizedBox(width: 4),
+              Expanded(child: _subStat('窗口', rt?.window, rt?.window ?? '--')),
             ],
           ),
         ],
@@ -236,7 +250,14 @@ class _RealtimeHero extends StatelessWidget {
       children: [
         Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
         const SizedBox(height: 3),
-        Text(display, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(display,
+              maxLines: 1,
+              softWrap: false,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+        ),
       ],
     );
   }
@@ -322,7 +343,18 @@ class _ThroughputChart extends StatelessWidget {
     final visible = points.take(60).toList();
     final tpsSpots = visible.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.tps)).toList();
     final maxTps = tpsSpots.fold<double>(0, (a, s) => s.y > a ? s.y : a);
+    final avgTps = tpsSpots.isEmpty ? 0.0 : tpsSpots.map((s) => s.y).reduce((a, b) => a + b) / tpsSpots.length;
     final qpsSpots = visible.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.qps)).toList();
+    final upper = maxTps == 0 ? 10.0 : maxTps * 1.15;
+
+    Widget leftTitle(double value, TitleMeta meta) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: Text(fmtCompact(value.round()),
+            textAlign: TextAlign.right,
+            style: TextStyle(fontSize: 9.5, color: scheme.onSurfaceVariant)),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 16, 14, 10),
@@ -331,17 +363,17 @@ class _ThroughputChart extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4)),
       ),
-      height: 210,
+      height: 230,
       child: LineChart(
         LineChartData(
           minY: 0,
-          maxY: maxTps == 0 ? 10 : maxTps * 1.1,
+          maxY: upper,
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
             horizontalInterval: maxTps == 0 ? 10 : (maxTps / 4),
             getDrawingHorizontalLine: (v) =>
-                FlLine(color: scheme.outlineVariant.withValues(alpha: 0.25), strokeWidth: 1),
+                FlLine(color: scheme.outlineVariant.withValues(alpha: 0.35), strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
             bottomTitles: AxisTitles(
@@ -361,10 +393,48 @@ class _ThroughputChart extends StatelessWidget {
               ),
             ),
             topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 48,
+                getTitlesWidget: leftTitle,
+              ),
+            ),
             rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
           borderData: FlBorderData(show: false),
+          extraLinesData: ExtraLinesData(
+            extraLinesOnTop: true,
+            horizontalLines: [
+              HorizontalLine(
+                y: avgTps,
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.75),
+                strokeWidth: 1.4,
+                dashArray: const [6, 4],
+                label: HorizontalLineLabel(
+                  show: true,
+                  alignment: Alignment.topRight,
+                  padding: const EdgeInsets.only(right: 4, top: 2),
+                  style: TextStyle(color: const Color(0xFFF59E0B), fontSize: 9.5, fontWeight: FontWeight.w700),
+                  labelResolver: (_) => '均 ${fmtCompact(avgTps)}',
+                ),
+              ),
+              if (maxTps > 0)
+                HorizontalLine(
+                  y: maxTps,
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.8),
+                  strokeWidth: 1.4,
+                  dashArray: const [4, 4],
+                  label: HorizontalLineLabel(
+                    show: true,
+                    alignment: Alignment.topLeft,
+                    padding: const EdgeInsets.only(left: 4, top: 2),
+                    style: TextStyle(color: const Color(0xFFEF4444), fontSize: 9.5, fontWeight: FontWeight.w700),
+                    labelResolver: (_) => '峰 ${fmtCompact(maxTps)}',
+                  ),
+                ),
+            ],
+          ),
           lineBarsData: [
             LineChartBarData(
               spots: tpsSpots,
@@ -399,6 +469,60 @@ class _ThroughputChart extends StatelessWidget {
   }
 
   String _2(int v) => v.toString().padLeft(2, '0');
+}
+
+/// Compact numeric table showing the actual per-minute TPS/QPS/tokens.
+class _TpsTable extends StatelessWidget {
+  final List<ThroughputPoint> points;
+  const _TpsTable({required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final rows = points.reversed.take(8).toList().reversed.toList();
+    return GlassCard(
+      borderRadius: BorderRadius.circular(20),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _head('时间', scheme),
+              _head('Token/秒', scheme),
+              _head('QPS', scheme),
+              _head('请求', scheme),
+              _head('Token', scheme),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ...rows.map((p) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  children: [
+                    _cell('${p.bucketStart.hour}:${p.bucketStart.minute.toString().padLeft(2, '0')}', scheme, bold: true),
+                    _cell(fmtCompact(p.tps), scheme, color: scheme.primary, bold: true),
+                    _cell(p.qps.toStringAsFixed(1), scheme),
+                    _cell('${p.requestCount}', scheme),
+                    _cell(fmtCompact(p.tokenConsumed), scheme),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _head(String t, ColorScheme scheme) => Expanded(
+        child: Text(t, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 10, fontWeight: FontWeight.w700)),
+      );
+
+  Widget _cell(String t, ColorScheme scheme, {bool bold = false, Color? color}) => Expanded(
+        child: Text(t,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+                color: color ?? scheme.onSurface, fontSize: 11, fontWeight: bold ? FontWeight.w700 : FontWeight.w500)),
+      );
 }
 
 class _LatencyChart extends StatelessWidget {
