@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -264,13 +267,21 @@ AppState buildState() {
   return state;
 }
 
+Future<void> _loadCjkFont() async {
+  final bytes = File('tool/fonts/DroidSansFallbackFull.ttf').readAsBytesSync();
+  final loader = FontLoader('Roboto')
+    ..addFont(Future.value(ByteData.sublistView(bytes)));
+  await loader.load();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('generate clean full-screen UI screenshots', (tester) async {
     SharedPreferences.setMockInitialValues(const {});
+    await _loadCjkFont();
     tester.view.physicalSize = const Size(1200, 2608);
-    tester.view.devicePixelRatio = 1.0;
+    tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.reset);
 
     final state = buildState();
@@ -298,11 +309,6 @@ void main() {
     await tester.tap(find.text('设置'));
     await settleShell(tester);
     await expectLater(find.byType(HomeShell), matchesGoldenFile('../test/goldens/06_settings.png'));
-
-    // Scroll settings to the theme section and capture the dynamic theme block.
-    await tester.drag(find.byType(HomeShell), const Offset(0, -900));
-    await settleShell(tester);
-    await expectLater(find.byType(HomeShell), matchesGoldenFile('../test/goldens/07_settings_theme.png'));
 
     // Dispose the shell so periodic timers do not leak.
     await tester.pumpWidget(const SizedBox());
