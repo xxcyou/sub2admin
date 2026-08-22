@@ -21,8 +21,10 @@ class AppState extends ChangeNotifier {
   Color _glowB = const Color(0xFF06B6D4);
   Color _accent = const Color(0xFF00E5FF);
 
-  AppState() {
-    _restorePrefs();
+  AppState({bool restorePrefs = true}) {
+    if (restorePrefs) {
+      _restorePrefs();
+    }
   }
 
   AppTheme get theme => _theme;
