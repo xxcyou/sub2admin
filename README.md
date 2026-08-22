@@ -49,14 +49,30 @@
 
 ## 📦 安装
 
-直接安装打包好的 APK：
+### 一键选择对应架构的 APK（推荐）
 
-```
-Sub2API管理面板_v1.3.0玻璃高级版.apk   （约 18 MB，arm64 架构，覆盖绝大多数现代安卓手机）
-```
+从 GitHub Release 按手机/模拟器架构下载，**不用下载全架构大包**：
 
-> 如需 x86_64 / 全 ABI 版本，请在项目目录执行：
-> `flutter build apk --release`（全架构）或 `--target-platform android-x64`（x86_64）
+| 架构 | 适用设备 | 下载文件 | 体积 |
+|---|---|---|---|
+| **arm64-v8a** | 绝大多数现代手机（推荐） | [`sub2admin-v1.3.0-arm64-v8a.apk`](https://github.com/xxcyou/sub2admin/releases/download/v1.3.0/sub2admin-v1.3.0-arm64-v8a.apk) | ~18 MB |
+| **armeabi-v7a** | 较老/低端 32 位手机 | [`sub2admin-v1.3.0-armeabi-v7a.apk`](https://github.com/xxcyou/sub2admin/releases/download/v1.3.0/sub2admin-v1.3.0-armeabi-v7a.apk) | ~16 MB |
+| **x86_64** | Android 模拟器 / x86 平板 | [`sub2admin-v1.3.0-x86_64.apk`](https://github.com/xxcyou/sub2admin/releases/download/v1.3.0/sub2admin-v1.3.0-x86_64.apk) | ~19 MB |
+| **全架构（省事）** | 不确认架构时直接下 | [`sub2admin-v1.3.0.apk`](https://github.com/xxcyou/sub2admin/releases/download/v1.3.0/sub2admin-v1.3.0.apk) | ~54 MB |
+
+> 查询自己手机的架构：`adb shell getprop ro.product.cpu.abi`（`arm64-v8a` 就是 arm64）。
+
+### 或本地构建
+
+```bash
+# 全架构 fat APK
+flutter build apk --release
+
+# 指定架构（体积更小）
+flutter build apk --release --target-platform android-arm64   # arm64-v8a
+flutter build apk --release --target-platform android-arm     # armeabi-v7a
+flutter build apk --release --target-platform android-x64     # x86_64
+```
 
 ### 首次使用
 
